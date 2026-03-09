@@ -30,3 +30,7 @@ output/
 # IDE
 .vscode/
 .idea/
+
+.hypothesis
+.kiro
+.pytest_cache

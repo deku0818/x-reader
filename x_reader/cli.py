@@ -90,6 +90,56 @@ def cmd_login(platform: str, headless: bool = False):
     from x_reader.login import login
     login(platform, headless=headless)
 
+def cmd_mcp(args: list[str]) -> None:
+    """启动 MCP server 子命令。"""
+    transport = "stdio"
+    host = "127.0.0.1"
+    port = 8000
+
+    i = 0
+    while i < len(args):
+        arg = args[i]
+        if arg == "--transport":
+            i += 1
+            if i < len(args):
+                transport = args[i]
+            else:
+                print("❌ --transport 需要一个值")
+                sys.exit(1)
+        elif arg == "--host":
+            i += 1
+            if i < len(args):
+                host = args[i]
+            else:
+                print("❌ --host 需要一个值")
+                sys.exit(1)
+        elif arg == "--port":
+            i += 1
+            if i < len(args):
+                try:
+                    port = int(args[i])
+                except ValueError:
+                    print(f"❌ 无效的端口号: {args[i]}")
+                    sys.exit(1)
+            else:
+                print("❌ --port 需要一个值")
+                sys.exit(1)
+        i += 1
+
+    if transport not in ("stdio", "sse"):
+        print(f"❌ 无效的 transport 模式: {transport}，支持 stdio 或 sse")
+        sys.exit(1)
+
+    try:
+        from x_reader.mcp_server import run_server
+    except ImportError:
+        print("❌ MCP 依赖未安装。请运行以下命令安装：")
+        print("   pip install x-reader[mcp]")
+        sys.exit(1)
+
+    run_server(transport, host, port)
+
+
 
 def main():
     if len(sys.argv) < 2:
@@ -102,6 +152,8 @@ Usage:
     x-reader login <platform>   Login to a platform (saves session for browser fallback)
     x-reader list               Show inbox contents
     x-reader clear              Clear inbox
+    x-reader mcp               启动 MCP server (stdio 模式)
+    x-reader mcp --transport sse  启动 MCP server (SSE 模式)
 
 Supported platforms:
     WeChat, Telegram, X/Twitter, YouTube,
@@ -117,7 +169,9 @@ Examples:
 
     cmd = sys.argv[1].lower()
 
-    if cmd == "login":
+    if cmd == "mcp":
+        cmd_mcp(sys.argv[2:])
+    elif cmd == "login":
         if len(sys.argv) < 3:
             print("❌ Usage: x-reader login <platform> [--headless]")
             print("   Supported: xhs, wechat")
